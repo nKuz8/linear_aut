@@ -1,17 +1,29 @@
+q = {"0": 2,
+     "1": [1, 1],
+     "2": [1, 1, 1],
+     "3": [1, 0, 1, 1],
+     "4": [1, 0, 0, 1, 1],
+     "5": [1, 0, 0, 1, 0, 1],
+     "6": [1, 0, 0, 0, 0, 1, 1],
+     "7": [1, 0, 0, 0, 0, 0, 1, 1],
+     "8": [1, 0, 0, 0, 1, 1, 0, 1, 1],
+     "10":[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1],
+     "12":[1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]}
+
 def matrix_mult(matrix_1, matrix_2):
     if matrix_check(matrix_1, matrix_2, "mult"):
         return 0
     else:
         result_matrix = []
         result_row = []
-        resul_mult = 0
+        resul_mult = [0] * len(mod)
 
         for i in range(0, len(matrix_1)):
             for j in range(0, len(matrix_2[0])):
                 for k in range(0, len(matrix_1[0])):
-                    resul_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), resul_mult)
+                    resul_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), resul_mult, True)
                 result_row.append(resul_mult)
-                resul_mult = 0
+                resul_mult = [0] * len(mod)
             result_matrix.append(result_row)
             result_row = []
 
@@ -34,7 +46,7 @@ def matrix_add(matrix_1, matrix_2):
         result_row = []
         for i in range(0, len(matrix_1)):
             for j in range(0, len(matrix_1[0])):
-                result_row.append(add_mod(matrix_1[i][j], matrix_2[i][j]))
+                result_row.append(add_mod(matrix_1[i][j], matrix_2[i][j], True))
             result_matrix.append(result_row)
             result_row = []
 
@@ -49,12 +61,81 @@ def matrix_print(matrix):
     print("\n")
 
 
-def add_mod(op1, op2):
-    return (op1 + op2) % mod
+def add_mod(op1, op2, carry=False):
+    if(type(op1) is int and type(op2) is int):
+        return (op1 + op2) % 2
+    else:
+        overflow = 0
+        result = []
+
+        while(len(op1) < len(op2)):
+            op1.insert(0, 0)
+        while(len(op2) < len(op1)):
+            op2.insert(0, 0)
+        for i in range(len(op1) - 1, -1, -1):
+            if ((op1[i] != op2[i]) != overflow):
+                result.append(1)
+            else:
+                result.append(0)
+
+            if carry:
+                if op1[i] + op2[i] + overflow > 1:
+                    overflow = 1
+                else:
+                    overflow = 0
+
+        if overflow == 1:
+            result.append(overflow)
+
+        result.reverse()
+        return div_mod(result, mod)
+
+
+def div_mod(op1, mod):
+    if mod == 0:
+        return op1 % 2
+    else:
+        mod_oper = mod.copy()
+        while(op1[0:-len(mod) + 1] != [0] * (len(op1) - len(mod) + 1)):
+            print("op1 = {}".format(op1))
+            while(len(mod_oper) < len(op1)):
+                mod_oper.append(0)
+
+            op1 = add_mod(op1, mod_oper, False)
+            while(op1[0] == 0):
+                op1.pop(0)
+                if len(op1) <= 0:
+                    break
+
+            mod_oper = mod.copy()
+
+        while(len(op1) < len(mod)):
+            op1.insert(0, 0)
+
+        while(len(op1) > len(mod)):
+            op1.pop(0)
+
+        return op1
 
 
 def mult_mod(op1, op2):
-    return (op1 * op2) % mod
+    if(type(op1) is int and type(op2) is int):
+        return (op1 * op2) % 2
+    else:
+        factor = op1.copy()
+        result = [0] * len(op2)
+
+        for i in range(len(op2) - 1, -1, -1):
+            if op2[i] == 1:
+                for j in range(len(op2) - 1 - i, 0, -1):
+                    factor.append(0)
+                while(len(result) < len(factor)):
+                    result.insert(0, 0)
+
+                result = add_mod(result, factor, False)
+                factor = op1.copy()
+
+        return div_mod(result, mod)
 
 
 def fun(s, matrix_A, x, matrix_B):
@@ -62,69 +143,161 @@ def fun(s, matrix_A, x, matrix_B):
 
 
 def main():
-    s = []
-    s.append(list(map(lambda x : int(x), input("Enter s0: ").split(" "))))
-
-    print("Enter matrix A: ")
-    matrix_A = []
-    matrix_row = []
-    while True:
-        raw_input = input()
-        if raw_input == "q":
-            break
-        else:
-            matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-            matrix_A.append(matrix_row)
-
-    matrix_B = []
-    print("Enter matrix B: ")
-    while True:
-        raw_input = input()
-        if raw_input == "q":
-            break
-        else:
-            matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-            matrix_B.append(matrix_row)
-
-    matrix_C = []
-    print("Enter matrix C: ")
-    while True:
-        raw_input = input()
-        if raw_input == "q":
-            break
-        else:
-            matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-            matrix_C.append(matrix_row)
-
-    matrix_D = []
-    print("Enter matrix D: ")
-    while True:
-        raw_input = input()
-        if raw_input == "q":
-            break
-        else:
-            matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-            matrix_D.append(matrix_row)
-
     global mod
-    mod = int(input("Enter mod: "))
-    # matrix_print(matrix_add(matrix_mult(matrix_1, matrix_2), matrix_1))
+    read_flags = [False] * 4
+    A = []
+    B = []
+    C = []
+    D = []
+    polinome = []
+    matrix_row = []
+
+    with open("params.txt", 'r') as file:
+        for line in file:
+            if line[0] == "q":
+                mod = q[line[line.find("^") + 1]]
+            elif line == "matrix_A\n":
+                read_flags[0] = True
+                continue
+                print("1")
+            elif line == "matrix_B\n":
+                read_flags[1] = True
+                continue
+            elif line == "matrix_C\n":
+                read_flags[2] = True
+                continue
+            elif line == "matrix_D\n":
+                read_flags[3] = True
+                continue
+            elif line == "end\n":
+                read_flags = [False] * 4
+                continue
+
+            if read_flags[0]:
+                for polies in line.split(" "):
+                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
+                    matrix_row.append(polinome)
+                A.append(matrix_row)
+                matrix_row = []
+            elif read_flags[1]:
+                for polies in line.split(" "):
+                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
+                    matrix_row.append(polinome)
+                B.append(matrix_row)
+                matrix_row = []
+            elif read_flags[2]:
+                for polies in line.split(" "):
+                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
+                    matrix_row.append(polinome)
+                C.append(matrix_row)
+                matrix_row = []
+            elif read_flags[3]:
+                for polies in line.split(" "):
+                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
+                    matrix_row.append(polinome)
+                D.append(matrix_row)
+                matrix_row = []
+
+    raw_s = input("Enter s0: ")
+    s = []
+    if mod == 2:
+        s.append(list(map(lambda x : int(x), raw_s.split(" "))))
+    else:
+        s_row = []
+        for polies in raw_s.split(" "):
+            polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
+            s_row.append(polinome)
+        s.append(s_row)
 
     while True:
+        raw_x = input("Enter x: ")
         x = []
-        raw_input = input("Enter x: ")
-        if raw_input == "q":
-            break
+        if mod == 2:
+            x.append(list(map(lambda y : int(y), raw_s.split(" "))))
         else:
-            x.append(list(map(lambda x : int(x), raw_input.split(" "))))
+            x_row = []
+            for polies in raw_x.split(" "):
+                polinome = list(map(lambda y: int(y), list(polies.replace("\n", ""))))
+                x_row.append(polinome)
+            x.append(x_row)
 
-            print("Next state: ")
-            matrix_row = fun(s, matrix_A, x, matrix_B)
-            matrix_print(matrix_row)
-            print("Next output: ")
-            matrix_print(fun(s, matrix_C, x, matrix_D))
-            s = matrix_row
+        print("Next state: ")
+        matrix_row = fun(s, A, x, B)
+        matrix_print(matrix_row)
+        print("Next output: ")
+        matrix_print(fun(s, C, x, D))
+        s = matrix_row
 
+
+
+
+
+    #
+    # print("Enter matrix A: ")
+    # matrix_A = []
+    # matrix_row = []
+    # while True:
+    #     raw_input = input()
+    #     if raw_input == "q":
+    #         break
+    #     else:
+    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
+    #         matrix_A.append(matrix_row)
+    #
+    # matrix_B = []
+    # print("Enter matrix B: ")
+    # while True:
+    #     raw_input = input()
+    #     if raw_input == "q":
+    #         break
+    #     else:
+    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
+    #         matrix_B.append(matrix_row)
+    #
+    # matrix_C = []
+    # print("Enter matrix C: ")
+    # while True:
+    #     raw_input = input()
+    #     if raw_input == "q":
+    #         break
+    #     else:
+    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
+    #         matrix_C.append(matrix_row)
+    #
+    # matrix_D = []
+    # print("Enter matrix D: ")
+    # while True:
+    #     raw_input = input()
+    #     if raw_input == "q":
+    #         break
+    #     else:
+    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
+    #         matrix_D.append(matrix_row)
+    #
+    # global mod
+    # mod = int(input("Enter mod: "))
+    # # matrix_print(matrix_add(matrix_mult(matrix_1, matrix_2), matrix_1))
+    #
+    # while True:
+    #     x = []
+    #     raw_input = input("Enter x: ")
+    #     if raw_input == "q":
+    #         break
+    #     else:
+    #         x.append(list(map(lambda x : int(x), raw_input.split(" "))))
+    #
+
+
+def test_main():
+    global mod
+    op1 = list(map(lambda x: int(x), input().split(" ")))
+    op2 = list(map(lambda x: int(x), input().split(" ")))
+    mod = list(map(lambda x: int(x), input().split(" ")))
+
+    # print(op1)
+    # print(op2)
+
+    print(mult_mod(op1, op2))
 
 if __name__ == "__main__":
     main()
