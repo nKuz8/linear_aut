@@ -7,8 +7,9 @@ q = {"0": 2,
      "6": [1, 0, 0, 0, 0, 1, 1],
      "7": [1, 0, 0, 0, 0, 0, 1, 1],
      "8": [1, 0, 0, 0, 1, 1, 0, 1, 1],
-     "10":[1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1],
-     "12":[1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]}
+     "10": [1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1],
+     "12": [1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]}
+
 
 def matrix_mult(matrix_1, matrix_2):
     if matrix_check(matrix_1, matrix_2, "mult"):
@@ -21,7 +22,7 @@ def matrix_mult(matrix_1, matrix_2):
         for i in range(0, len(matrix_1)):
             for j in range(0, len(matrix_2[0])):
                 for k in range(0, len(matrix_1[0])):
-                    resul_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), resul_mult, True)
+                    resul_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), resul_mult, carry=True)
                 result_row.append(resul_mult)
                 resul_mult = [0] * len(mod)
             result_matrix.append(result_row)
@@ -46,7 +47,7 @@ def matrix_add(matrix_1, matrix_2):
         result_row = []
         for i in range(0, len(matrix_1)):
             for j in range(0, len(matrix_1[0])):
-                result_row.append(add_mod(matrix_1[i][j], matrix_2[i][j], True))
+                result_row.append(add_mod(matrix_1[i][j], matrix_2[i][j], carry=True))
             result_matrix.append(result_row)
             result_row = []
 
@@ -56,24 +57,24 @@ def matrix_add(matrix_1, matrix_2):
 def matrix_print(matrix):
     for row in matrix:
         for el in row:
-            print("{} ".format(el), end = "")
+            print("{} ".format(el), end="")
         print()
     print("\n")
 
 
-def add_mod(op1, op2, carry=False):
-    if(type(op1) is int and type(op2) is int):
+def add_mod(op1, op2, carry=False, div=False):
+    if type(op1) is int and type(op2) is int:
         return (op1 + op2) % 2
     else:
         overflow = 0
         result = []
 
-        while(len(op1) < len(op2)):
+        while len(op1) < len(op2):
             op1.insert(0, 0)
-        while(len(op2) < len(op1)):
+        while len(op2) < len(op1):
             op2.insert(0, 0)
         for i in range(len(op1) - 1, -1, -1):
-            if ((op1[i] != op2[i]) != overflow):
+            if (op1[i] != op2[i]) != overflow:
                 result.append(1)
             else:
                 result.append(0)
@@ -88,7 +89,11 @@ def add_mod(op1, op2, carry=False):
             result.append(overflow)
 
         result.reverse()
-        return div_mod(result, mod)
+
+        if div:
+            return result
+        else:
+            return div_mod(result, mod)
 
 
 def div_mod(op1, mod):
@@ -96,30 +101,35 @@ def div_mod(op1, mod):
         return op1 % 2
     else:
         mod_oper = mod.copy()
-        while(op1[0:-len(mod) + 1] != [0] * (len(op1) - len(mod) + 1)):
-            print("op1 = {}".format(op1))
-            while(len(mod_oper) < len(op1)):
+        while op1[0] == 0 and len(op1) > len(mod):
+            op1.pop(0)
+
+        while (op1[0:-len(mod) + 1] != [0] * (len(op1) - len(mod) + 1) and len(op1) > len(mod)) or (len(op1) == len(mod) and op1[0] == 1 and op1 != mod):
+            while len(mod_oper) < len(op1):
                 mod_oper.append(0)
 
-            op1 = add_mod(op1, mod_oper, False)
-            while(op1[0] == 0):
+            op1 = add_mod(op1, mod_oper, div=True)
+            while op1[0] == 0:
                 op1.pop(0)
                 if len(op1) <= 0:
                     break
 
             mod_oper = mod.copy()
 
-        while(len(op1) < len(mod)):
+        while op1[0] == 0 and len(op1) > len(mod):
+            op1.pop(0)
+
+        while len(op1) < len(mod):
             op1.insert(0, 0)
 
-        while(len(op1) > len(mod)):
+        while len(op1) > len(mod):
             op1.pop(0)
 
         return op1
 
 
 def mult_mod(op1, op2):
-    if(type(op1) is int and type(op2) is int):
+    if type(op1) is int and type(op2) is int:
         return (op1 * op2) % 2
     else:
         factor = op1.copy()
@@ -129,10 +139,10 @@ def mult_mod(op1, op2):
             if op2[i] == 1:
                 for j in range(len(op2) - 1 - i, 0, -1):
                     factor.append(0)
-                while(len(result) < len(factor)):
+                while len(result) < len(factor):
                     result.insert(0, 0)
 
-                result = add_mod(result, factor, False)
+                result = add_mod(result, factor)
                 factor = op1.copy()
 
         return div_mod(result, mod)
@@ -201,7 +211,7 @@ def main():
     raw_s = input("Enter s0: ")
     s = []
     if mod == 2:
-        s.append(list(map(lambda x : int(x), raw_s.split(" "))))
+        s.append(list(map(lambda x: int(x), raw_s.split(" "))))
     else:
         s_row = []
         for polies in raw_s.split(" "):
@@ -213,7 +223,7 @@ def main():
         raw_x = input("Enter x: ")
         x = []
         if mod == 2:
-            x.append(list(map(lambda y : int(y), raw_s.split(" "))))
+            x.append(list(map(lambda y: int(y), raw_s.split(" "))))
         else:
             x_row = []
             for polies in raw_x.split(" "):
@@ -228,76 +238,17 @@ def main():
         matrix_print(fun(s, C, x, D))
         s = matrix_row
 
+# def test_main():
+#     global mod
+#     op1 = list(map(lambda x: int(x), input().split(" ")))
+#     op2 = list(map(lambda x: int(x), input().split(" ")))
+#     mod = list(map(lambda x: int(x), input().split(" ")))
+#
+#     # print(op1)
+#     # print(op2)
+#
+#     print(mult_mod(op1, op2))
 
-
-
-
-    #
-    # print("Enter matrix A: ")
-    # matrix_A = []
-    # matrix_row = []
-    # while True:
-    #     raw_input = input()
-    #     if raw_input == "q":
-    #         break
-    #     else:
-    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-    #         matrix_A.append(matrix_row)
-    #
-    # matrix_B = []
-    # print("Enter matrix B: ")
-    # while True:
-    #     raw_input = input()
-    #     if raw_input == "q":
-    #         break
-    #     else:
-    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-    #         matrix_B.append(matrix_row)
-    #
-    # matrix_C = []
-    # print("Enter matrix C: ")
-    # while True:
-    #     raw_input = input()
-    #     if raw_input == "q":
-    #         break
-    #     else:
-    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-    #         matrix_C.append(matrix_row)
-    #
-    # matrix_D = []
-    # print("Enter matrix D: ")
-    # while True:
-    #     raw_input = input()
-    #     if raw_input == "q":
-    #         break
-    #     else:
-    #         matrix_row = list(map(lambda x : int(x), raw_input.split(" ")))
-    #         matrix_D.append(matrix_row)
-    #
-    # global mod
-    # mod = int(input("Enter mod: "))
-    # # matrix_print(matrix_add(matrix_mult(matrix_1, matrix_2), matrix_1))
-    #
-    # while True:
-    #     x = []
-    #     raw_input = input("Enter x: ")
-    #     if raw_input == "q":
-    #         break
-    #     else:
-    #         x.append(list(map(lambda x : int(x), raw_input.split(" "))))
-    #
-
-
-def test_main():
-    global mod
-    op1 = list(map(lambda x: int(x), input().split(" ")))
-    op2 = list(map(lambda x: int(x), input().split(" ")))
-    mod = list(map(lambda x: int(x), input().split(" ")))
-
-    # print(op1)
-    # print(op2)
-
-    print(mult_mod(op1, op2))
 
 if __name__ == "__main__":
     main()
