@@ -9,6 +9,7 @@ q = {"0": 2,
      "8": [1, 0, 0, 0, 1, 1, 0, 1, 1],
      "10": [1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1],
      "12": [1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]}
+mod = [0]
 
 
 def matrix_mult(matrix_1, matrix_2):
@@ -17,14 +18,20 @@ def matrix_mult(matrix_1, matrix_2):
     else:
         result_matrix = []
         result_row = []
-        resul_mult = [0] * len(mod)
+        if len(mod) == 1:
+            resul_mult = [0]
+        else:
+            resul_mult = [0] * len(mod)
 
         for i in range(0, len(matrix_1)):
             for j in range(0, len(matrix_2[0])):
                 for k in range(0, len(matrix_1[0])):
                     resul_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), resul_mult, carry=True)
                 result_row.append(resul_mult)
-                resul_mult = [0] * len(mod)
+                if len(mod) == 1:
+                    resul_mult = [0]
+                else:
+                    resul_mult = [0] * len(mod)
             result_matrix.append(result_row)
             result_row = []
 
@@ -63,8 +70,8 @@ def matrix_print(matrix):
 
 
 def add_mod(op1, op2, carry=False, div=False):
-    if type(op1) is int and type(op2) is int:
-        return (op1 + op2) % 2
+    if len(op1) == 1 and len(op2) == 1:
+        return [(op1[0] + op2[0]) % mod[0]]
     else:
         overflow = 0
         result = []
@@ -97,8 +104,8 @@ def add_mod(op1, op2, carry=False, div=False):
 
 
 def div_mod(op1, mod):
-    if mod == 0:
-        return op1 % 2
+    if len(mod) == 1:
+        return [op1[0] % mod[0]]
     else:
         mod_oper = mod.copy()
         while op1[0] == 0 and len(op1) > len(mod):
@@ -129,8 +136,8 @@ def div_mod(op1, mod):
 
 
 def mult_mod(op1, op2):
-    if type(op1) is int and type(op2) is int:
-        return (op1 * op2) % 2
+    if len(op1) == 1 and len(op2) == 1:
+        return [(op1[0] * op2[0]) % mod[0]]
     else:
         factor = op1.copy()
         result = [0] * len(op2)
@@ -163,9 +170,13 @@ def main():
     matrix_row = []
 
     with open("params.txt", 'r') as file:
+        global q
         for line in file:
             if line[0] == "q":
-                mod = q[line[line.find("^") + 1]]
+                if len(line) > 4:
+                    mod = q[line[line.find("^") + 1]]
+                else:
+                    mod = [int(line[line.find("=") + 1])]
             elif line == "matrix_A\n":
                 read_flags[0] = True
                 continue
@@ -210,26 +221,26 @@ def main():
 
     raw_s = input("Enter s0: ")
     s = []
-    if mod == 2:
-        s.append(list(map(lambda x: int(x), raw_s.split(" "))))
-    else:
-        s_row = []
-        for polies in raw_s.split(" "):
-            polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
-            s_row.append(polinome)
-        s.append(s_row)
+    # if type(mod) is int:
+    #     s.append(list(map(lambda x: int(x), raw_s.split(" "))))
+    # else:
+    s_row = []
+    for polies in raw_s.split(" "):
+        polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
+        s_row.append(polinome)
+    s.append(s_row)
 
     while True:
         raw_x = input("Enter x: ")
         x = []
-        if mod == 2:
-            x.append(list(map(lambda y: int(y), raw_s.split(" "))))
-        else:
-            x_row = []
-            for polies in raw_x.split(" "):
-                polinome = list(map(lambda y: int(y), list(polies.replace("\n", ""))))
-                x_row.append(polinome)
-            x.append(x_row)
+        # if mod == 2:
+        #     x.append(list(map(lambda y: int(y), raw_s.split(" "))))
+        # else:
+        x_row = []
+        for polies in raw_x.split(" "):
+            polinome = list(map(lambda y: int(y), list(polies.replace("\n", ""))))
+            x_row.append(polinome)
+        x.append(x_row)
 
         print("Next state: ")
         matrix_row = fun(s, A, x, B)
