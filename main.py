@@ -1,15 +1,8 @@
-q = {"0": 2,
-     "1": [1, 1],
-     "2": [1, 1, 1],
-     "3": [1, 0, 1, 1],
-     "4": [1, 0, 0, 1, 1],
-     "5": [1, 0, 0, 1, 0, 1],
-     "6": [1, 0, 0, 0, 0, 1, 1],
-     "7": [1, 0, 0, 0, 0, 0, 1, 1],
-     "8": [1, 0, 0, 0, 1, 1, 0, 1, 1],
-     "10": [1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1],
-     "12": [1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1]}
-mod = [0]
+A = []
+B = []
+C = []
+D = []
+mod = 0
 
 
 def matrix_mult(matrix_1, matrix_2):
@@ -18,20 +11,15 @@ def matrix_mult(matrix_1, matrix_2):
     else:
         result_matrix = []
         result_row = []
-        if len(mod) == 1:
-            resul_mult = [0]
-        else:
-            resul_mult = [0] * len(mod)
+        result_mult = 0
+        #print("multiple of {} on {}".format(matrix_1, matrix_2))
 
         for i in range(0, len(matrix_1)):
             for j in range(0, len(matrix_2[0])):
                 for k in range(0, len(matrix_1[0])):
-                    resul_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), resul_mult, carry=True)
-                result_row.append(resul_mult)
-                if len(mod) == 1:
-                    resul_mult = [0]
-                else:
-                    resul_mult = [0] * len(mod)
+                    result_mult = add_mod(mult_mod(matrix_1[i][k], matrix_2[k][j]), result_mult, carry=True)
+                result_row.append(result_mult)
+                result_mult = 0
             result_matrix.append(result_row)
             result_row = []
 
@@ -70,9 +58,8 @@ def matrix_print(matrix):
 
 
 def add_mod(op1, op2, carry=False, div=False):
-    if len(op1) == 1 and len(op2) == 1:
-        return [(op1[0] + op2[0]) % mod[0]]
-    else:
+    return (op1 + op2) % mod
+    if(False):
         overflow = 0
         result = []
 
@@ -104,9 +91,8 @@ def add_mod(op1, op2, carry=False, div=False):
 
 
 def div_mod(op1, mod):
-    if len(mod) == 1:
-        return [op1[0] % mod[0]]
-    else:
+    return op1 % mod
+    if(False):
         mod_oper = mod.copy()
         while op1[0] == 0 and len(op1) > len(mod):
             op1.pop(0)
@@ -136,9 +122,8 @@ def div_mod(op1, mod):
 
 
 def mult_mod(op1, op2):
-    if len(op1) == 1 and len(op2) == 1:
-        return [(op1[0] * op2[0]) % mod[0]]
-    else:
+    return (op1*op2) % mod
+    if(False):
         factor = op1.copy()
         result = [0] * len(op2)
 
@@ -159,24 +144,123 @@ def fun(s, matrix_A, x, matrix_B):
     return matrix_add(matrix_mult(s, matrix_A), matrix_mult(x, matrix_B))
 
 
-def main():
+def dec_to_q(number, length):
     global mod
+    res_vec = []
+    for i in range(length):
+        res_vec.append(number % mod)
+        number //= mod
+    res_vec.reverse()
+    return [res_vec]
+
+
+def q_to_dec(vec):
+    number = 0
+    for i in range(len(vec[0]) - 1, -1, -1):
+        number += mod ** (len(vec[0]) - 1 - i) * vec[0][i]
+    return number
+
+
+def make_reach_table():
+    global mod, A, B
+    reach_table = []
+    table_line = [0] * (mod ** len(A))
+    for i in range(mod ** len(A)):
+        for j in range(mod ** len(B)):
+            table_line[q_to_dec(fun(dec_to_q(i, len(A)), A, dec_to_q(j, len(B)), B))] = 1
+        reach_table.append(table_line)
+        table_line = [0] * mod ** len(A)
+    return reach_table
+
+                       
+def depth_first_search(reach_table, mode):
+    global n
+    stack = []
+    marked = []
+    result = []
+    
+    if mode == "strong":
+        dps_rec(reach_table, 0, marked, stack, result, "strong") 
+    for i in range(len(reach_table)):
+        if mode == "strong" and i != 0:
+            first = marked.copy()
+            marked = []
+            stack = []
+            result = []
+            dps_rec(reach_table, i, marked, stack, result, "strong")
+            if first != marked:
+                return False
+            
+        elif mode == "strong" and i == 0:
+            continue
+
+        else:
+            flag = False
+            for item in result:
+                if i in item:
+                    flag = True
+                    break
+
+            if flag:
+                continue
+            else:
+                marked.append(i)
+                stack.append(i)
+
+                while len(stack) != 0:
+                    for j in range(len(reach_table[i])):
+                        if ((reach_table[i][j] == 1 or reach_table[j][i] == 1) and mode == "normal") and i != j:
+                            flag = False
+                            for item in result:
+                                if j in item:
+                                    flag = True
+                                    break
+
+                            if flag or j in marked:
+                                continue
+                            else:
+                                marked.append(j)
+                                stack.append(j)
+                                dps_rec(reach_table, j, marked, stack, result, mode)
+                                stack.pop(-1)
+                    stack.pop(-1)
+
+                result.append(marked)
+                marked = []
+    return result if mode == "normal" else True
+
+
+def dps_rec(reach_table, i, marked, stack, result, mode):
+    for j in range(len(reach_table[i])):
+        if (((reach_table[i][j] == 1 or reach_table[j][i] == 1) and mode == "normal") or (reach_table[i][j] == 1 and mode == "strong")) and i != j:
+            flag = False
+            for item in result:
+                if j in item:
+                    flag = True
+                    break
+
+            if flag or j in marked:
+                continue
+            else:
+                marked.append(j)
+                stack.append(j)
+                dps_rec(reach_table, j, marked, stack, result, mode)
+                stack.pop(-1)
+
+
+def main():
+    global mod, A, B, C, D
     read_flags = [False] * 4
-    A = []
-    B = []
-    C = []
-    D = []
     polinome = []
     matrix_row = []
 
-    with open("params.txt", 'r') as file:
-        global q
+    f = input("Enter file name: ")
+    with open(f, 'r') as file:
+        global mod
         for line in file:
             if line[0] == "q":
-                if len(line) > 4:
-                    mod = q[line[line.find("^") + 1]]
-                else:
-                    mod = [int(line[line.find("=") + 1])]
+                mod = int(line[line.find("=") + 1: ])
+                print(mod)
             elif line == "matrix_A\n":
                 read_flags[0] = True
                 continue
@@ -195,52 +279,34 @@ def main():
                 continue
 
             if read_flags[0]:
-                for polies in line.split(" "):
-                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
-                    matrix_row.append(polinome)
+                matrix_row = list(map(lambda x: int(x), line.replace("\n", "").split(" ")))
                 A.append(matrix_row)
-                matrix_row = []
             elif read_flags[1]:
-                for polies in line.split(" "):
-                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
-                    matrix_row.append(polinome)
+                matrix_row = list(map(lambda x: int(x), line.replace("\n", "").split(" ")))
                 B.append(matrix_row)
-                matrix_row = []
             elif read_flags[2]:
-                for polies in line.split(" "):
-                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
-                    matrix_row.append(polinome)
+                matrix_row = list(map(lambda x: int(x), line.replace("\n", "").split(" ")))
                 C.append(matrix_row)
-                matrix_row = []
             elif read_flags[3]:
-                for polies in line.split(" "):
-                    polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
-                    matrix_row.append(polinome)
+                matrix_row = list(map(lambda x: int(x), line.replace("\n", "").split(" ")))
                 D.append(matrix_row)
-                matrix_row = []
 
+    reach_table = make_reach_table()                        
+    links = depth_first_search(reach_table, "normal")
+    print("Automat is linked") if len(links) == 1 else print("Automat is not linked")
+    print("Linked components: {}".format(links))
+    print("Total links: {}".format(len(links)))
+    strong_links = depth_first_search(reach_table, "strong")
+    print("Automat is strongly linked") if strong_links else print("Automat is not strongly linked")                        
     raw_s = input("Enter s0: ")
-    s = []
+    s = [list(map(lambda x: int(x), raw_s.replace("\n", "").split(" ")))]
     # if type(mod) is int:
     #     s.append(list(map(lambda x: int(x), raw_s.split(" "))))
     # else:
-    s_row = []
-    for polies in raw_s.split(" "):
-        polinome = list(map(lambda x: int(x), list(polies.replace("\n", ""))))
-        s_row.append(polinome)
-    s.append(s_row)
 
     while True:
         raw_x = input("Enter x: ")
-        x = []
-        # if mod == 2:
-        #     x.append(list(map(lambda y: int(y), raw_s.split(" "))))
-        # else:
-        x_row = []
-        for polies in raw_x.split(" "):
-            polinome = list(map(lambda y: int(y), list(polies.replace("\n", ""))))
-            x_row.append(polinome)
-        x.append(x_row)
+        x = [list(map(lambda x: int(x), raw_x.replace("\n", "").split(" ")))]
 
         print("Next state: ")
         matrix_row = fun(s, A, x, B)
